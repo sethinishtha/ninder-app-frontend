@@ -16,7 +16,7 @@ const ProfileGenerator = () => {
   return (
     <div className="rounded-lg overflow-hidden bg-white shadow-md shadow-lg">
       <div className="relative">
-        <img src='http://192.168.0.83:8080/src/main/resources/images/059e35cf-9afb-4012-b23c-8ebd56a6d988.jpg' />
+        <img src='http://192.168.0.83:8081/src/main/resources/images/059e35cf-9afb-4012-b23c-8ebd56a6d988.jpg' />
         <div className="absolute bottom-0 left-0 right-0 text-white bg-gradient-to-t from-black p-4">
           <h2 className='text-3xl font-bold'>Mike Varshovski, 36</h2>
         </div>
@@ -53,17 +53,18 @@ const ProfileGenerator = () => {
 };
 
 
-const MatchesList = () => {
+const MatchesList = ({ onSelect }) => {
   return (
     <div className='rounded-lg shadow-lg p-4'>
-      <h1>Matches List</h1>
+      <h2 className='text 2xl font-bold mb-4'>Matches List</h2>
       <ul>
         {[
-          { id: 1, name: 'Mike', imageUrl: 'http://192.168.0.83:8080/src/main/resources/images/3a0def1e-e83c-4df9-a279-645d179e18b2.jpg' },
-          { id: 2, name: 'Sylvester', imageUrl: 'http://192.168.0.83:8080/src/main/resources/images/3a0def1e-e83c-4df9-a279-645d179e18b2.jpg' },
+          { id: 1, name: 'Mike', imageUrl: 'http://192.168.0.83:8081/src/main/resources/images/3a0def1e-e83c-4df9-a279-645d179e18b2.jpg' },
+          { id: 2, name: 'Sylvester', imageUrl: 'http://192.168.0.83:8081/src/main/resources/images/3a0def1e-e83c-4df9-a279-645d179e18b2.jpg' },
         ].map(match => (
           <li key={match.id}>
-            <button className='flex items-center space-x-4 p-2 hover:bg-gray-100 rounded-lg w-full'>
+            <button className='flex items-center space-x-4 p-2 hover:bg-gray-100 rounded-lg w-full'
+            onClick={onSelect}>
             <img
               src={match.imageUrl}
               alt={match.name}
@@ -80,17 +81,69 @@ const MatchesList = () => {
 
 
 
+const ChatScreen = () => {
+
+
+  const[input,setInput] = useState('');
+
+  const handleSend = () => {
+    if(input.trim() === '') return;
+    console.log('Sending message:', input);
+    setInput('');
+  }
+
+  return (
+    <div className='rounded-lg shadow-lg p-4'>
+      <h2 className='text 2xl font-bold mb-4'>Chat Screen </h2>
+      <div className='h-[50vh] border rounded overflow-y-auto mb-4 p-2'>This is where the chat interface would be implemented.
+      {[
+        "Hi there!",
+        "Hello! How are you?",
+        "I'm good, thanks! What about you?",
+        "Doing well, just enjoying the day.",
+        "That's great to hear!",  "Hello! How are you?",
+        "I'm good, thanks! What about you?",
+        "Doing well, just enjoying the day.",
+        "That's great to hear!"
+      ].map((message, index) => (
+        <div key={index} className='mb-2'>
+          <div className='mb-4 p-2 rounded bg-gray-200 w-fit'>{message}</div>
+        </div>
+      ))
+      }
+      </div>
+      <div className='flex'>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className='flex-grow border rounded-l px-4 py-2 focus:outline-none'
+          placeholder='Type your message...'
+        />
+        <button onClick={() => handleSend()} 
+        className='bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600'>
+          Send
+        </button>
+      </div>
+
+    </div>
+  )
+}
+
+
 
 function App() {
 
-  const [currentScreen, setCurrentScreen] = useState('profiles');
+  const [currentScreen, setCurrentScreen] = useState('matches');
 
   const screen = () => {
     switch (currentScreen) {
       case 'profiles':
         return <ProfileGenerator />;
       case 'matches':
-        return <MatchesList />;
+        return <MatchesList onSelect={() => setCurrentScreen('chats')} />;
+      case 'chats':
+        return <ChatScreen />;
     }
   }
 
