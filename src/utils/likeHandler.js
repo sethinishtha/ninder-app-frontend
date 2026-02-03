@@ -4,7 +4,7 @@ export class LikeHandler {
     this.setParticles = setParticles;
   }
 
-  handleLike() {
+  handleLike(profileId) {
     this.setIsLiked(true);
     
     
@@ -22,5 +22,20 @@ export class LikeHandler {
       this.setIsLiked(false);
       this.setParticles([]);
     }, 600);
+
+    const saveMatch = async (profileId) => {
+      const response = await fetch('http://localhost:8080/api/matches/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ profileId }),
+      });
+      if (!response.ok) {
+        console.error('Failed to save match');
+      }
+    }
+    saveMatch(profileId);
   }
+  
 }
