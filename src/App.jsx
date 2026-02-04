@@ -1,8 +1,9 @@
 
 import './App.css'
-import { User, MessageCircle, Heart, X, FerrisWheel } from 'lucide-react'
+import { User, MessageCircle, Heart, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { LikeHandler } from './utils/likeHandler'
+
 
 const fetchRandomProfile = async () => {
  const profiles = await fetch('http://localhost:8080/api/profiles/random');
@@ -27,6 +28,20 @@ const fetchConversations = async (conversationId) => {
  }
  return conversations.json();
 };
+
+
+const sendMessage = async (conversationId, message) => {
+  const response = await fetch(`http://localhost:8080/conversations/${conversationId}`, {
+    method: 'POST', 
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messageText: message , senderProfileId: 1 }),
+  });
+  if (!response.ok) {
+    console.error('Failed to send message');
+  }
+}
 
 
 const ProfileGenerator = ({profile, onSwipe}) => {
@@ -110,26 +125,48 @@ const MatchesList = ({ matches,onSelect }) => {
 
 
 
-const ChatScreen = ({currentMatch, conversation}) => {
-
+const ChatScreen = ({currentMatch, conversation, onSendMessage}) => {
 
   const[input,setInput] = useState('');
+  const[messages, setMessages] = useState([]);
 
-  
+  useEffect(() => {
+    if(conversation && conversation.messages) {
+      setMessages(conversation.messages);
+    }
+  }, [conversation]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if(input.trim() === '') return;
-    console.log('Sending message:', input);
+    
+    const newMessage = {
+      content: input,
+      messageText: input,
+      senderProfileId: 1
+    };
+    
+    // Update parent state
+    if(onSendMessage) {
+      onSendMessage(newMessage);
+    }
+    
+    // Optimistically add message to local UI
+    setMessages([...messages, newMessage]);
     setInput('');
+    
+    // Send to backend
+    if(conversation && conversation.id) {
+      await sendMessage(conversation.id, input);
+    }
   }
 
   return currentMatch ?(
     <div className='rounded-lg shadow-lg p-4'>
       <h2 className='text 2xl font-bold mb-4'>Chat with {currentMatch.firstName}</h2>
       <div className='h-[50vh] border rounded overflow-y-auto mb-4 p-2'>
-      {conversation && conversation.map((message, index) => (
+      {messages && messages.map((message, index) => (
         <div key={index} className='mb-2'>
-          <div className='mb-4 p-2 rounded bg-gray-200 w-fit'>{message.content || message}</div>
+          <div className='mb-4 p-2 rounded bg-gray-200 w-fit'>{message.content || message.messageText || message}</div>
         </div>
       ))
       }
@@ -141,6 +178,7 @@ const ChatScreen = ({currentMatch, conversation}) => {
           onChange={(e) => setInput(e.target.value)}
           className='flex-grow border rounded-l px-4 py-2 focus:outline-none'
           placeholder='Type your message...'
+          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
         />
         <button onClick={() => handleSend()} 
         className='bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600'>
@@ -196,9 +234,20 @@ function App() {
     }
   };
 
+  const onSendMessage = (newMessage) => {
+    // Update the currentChat state with the new message
+    setCurrentChat(prevChat => ({
+      ...prevChat,
+      conversation: {
+        ...prevChat.conversation,
+        messages: [...(prevChat.conversation.messages || []), newMessage]
+      }
+    }));
+  };
+
   const onSelectMatch = async(profile, conversationId) => {
     const conversation = await fetchConversations(conversationId);
-    setCurrentChat({match : profile , conversation : conversation.messages});
+    setCurrentChat({match : profile , conversation : conversation});
     setCurrentScreen('chats');
   }
 
@@ -209,7 +258,7 @@ function App() {
       case 'matches':
         return <MatchesList matches={matches} onSelect={onSelectMatch} />;
       case 'chats':
-        return <ChatScreen currentMatch={currentChat.match} conversation={currentChat.conversation} />;
+        return <ChatScreen currentMatch={currentChat.match} conversation={currentChat.conversation} onSendMessage={onSendMessage} />;
     }
   }
 
